@@ -2,7 +2,7 @@ const $ = document.querySelector.bind(document);
 const $$ = document.querySelectorAll.bind(document);
 
 const Player_storage = "Hieu_Pham";
-
+const player = $(".player");
 const heading = $("header h2");
 const cdThumb = $(".cd-thumb");
 const playBtn = $(".btn-toggle-play");
@@ -23,13 +23,13 @@ const app = {
     {
       name: "Opening Too Many Loosing Heroines",
       singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=yw1o5CC70MY&ab_channel=frogcoatrecords",
+      path: "./music/makein.mp3",
       image: "./img/anna.jpg",
     },
     {
       name: "Opening 薬 屋 の ひ と り ご と",
       singer: "MaoMao",
-      path: "https://www.youtube.com/watch?v=o5iZ4UunCKg&ab_channel=Jamong",
+      path: "./music/duocsu.mp3",
       image: "./img/kusuriya.jpg",
     },
     {
@@ -85,17 +85,49 @@ const app = {
     $(".playlist").innerHTML = htmls.join("");
   },
   handleEvents: function () {
+    const _this = this;
     const cd = $(".cd");
     const cdWidth = cd.offsetWidth;
+    //xu ly phong to thu nho
     document.onscroll = function () {
       const scrollTop = window.scrollY || document.documentElement.scrollTop;
       const newWidth = cdWidth - scrollTop;
       cd.style.width = newWidth > 0 ? newWidth + "px" : 0;
       cd.style.opacity = newWidth / cdWidth;
     };
+    //xu ly khi click
+    playBtn.onclick = function () {
+      if (_this.isPlaying) {
+        _this.isPlaying = false;
+        audio.pause();
+        player.classList.remove("playing");
+      } else {
+        _this.isPlaying = true;
+        audio.play();
+        player.classList.add("playing");
+      }
+    };
+  },
+  defineProperties: function () {
+    Object.defineProperty(this, "currentSong", {
+      get: function () {
+        return this.songs[this.curIndex];
+      },
+    });
+  },
+  loadCurrentSong: function () {
+    heading.textContent = this.currentSong.name;
+    cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
+    audio.src = this.currentSong.path;
   },
   start: function () {
+    //định nghĩa các thuộc tính cho object
+    this.defineProperties();
+    //lắng nghe và xử lý các sự kiện
     this.handleEvents();
+    //tải lên thông tin bài hát đầu tiên vào UI
+    this.loadCurrentSong();
+    //render các danh sách bài hát
     this.render();
   },
 };
