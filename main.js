@@ -12,7 +12,7 @@ const nextBtn = $(".btn-next");
 const randomBtn = $(".btn-random");
 const repeatBtn = $(".btn-repeat");
 const playlist = $(".playlist");
-
+const progress = $("#progress");
 const app = {
   curIndex: 0,
   isPlaying: false,
@@ -35,37 +35,37 @@ const app = {
     {
       name: "BunGo Strays Dog OST",
       singer: "KaTa",
-      path: "https://www.youtube.com/watch?v=J5iNgWwo5SA&list=RDGMEMhCgTQvcskbGUxqI4Sn2QYw&index=3&ab_channel=GRIMM",
+      path: "./music/dog.mp3",
       image: "./img/straydog.jpg",
     },
     {
       name: "Ending Cafe Familia Terrace",
       singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=8m6slOc0Nz8&list=RDGMEMhCgTQvcskbGUxqI4Sn2QYw&start_radio=1&rv=o5iZ4UunCKg&ab_channel=GAccelKun",
+      path: "./music/cafe.mp3",
       image: "./img/cafe.jpg",
     },
     {
       name: "That Time I Got Reincarnated as a Slime",
-      singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=bTJxNHbGT34&list=WL&index=7&ab_channel=Jamong",
+      singer: "Hieu Anna",
+      path: "./music/slime.mp3",
       image: "./img/slime.webp",
     },
     {
       name: "Boruto Naruto Next Generations - Ending 23",
-      singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=Uy3GIGuz7_Y&list=WL&index=8&ab_channel=Saahi%27sAMVs",
+      singer: "Pham Trung Hieu",
+      path: "./music/bo.mp3",
       image: "./img/boruto.jpg",
     },
     {
       name: "Wanna Go Home-Konosuba ",
       singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=MQZV4SnshYs&list=WL&index=10&ab_channel=AniMusic",
+      path: "./music/ko.mp3",
       image: "./img/konosuba.jpg",
     },
     {
       name: "たからもの」Music Video",
       singer: "Yanami Anna",
-      path: "https://www.youtube.com/watch?v=PF_jsc1jByE&list=WL&index=35&ab_channel=%E3%81%BD%E3%81%AB%E3%81%8D%E3%82%83%E3%82%93-AnimePONYCANYON",
+      path: "./music/go.mp3",
       image: "./img/gottoubun.jpg",
     },
   ],
@@ -95,18 +95,54 @@ const app = {
       cd.style.width = newWidth > 0 ? newWidth + "px" : 0;
       cd.style.opacity = newWidth / cdWidth;
     };
+    //xu ly dia cd quay
+    const cdThumbAnimate = cdThumb.animate([{ transform: "rotate(360deg)" }], {
+      duration: 10000, // 10s
+      iterations: Infinity,
+    });
+    cdThumbAnimate.pause();
     //xu ly khi click
     playBtn.onclick = function () {
       if (_this.isPlaying) {
-        _this.isPlaying = false;
         audio.pause();
-        player.classList.remove("playing");
       } else {
-        _this.isPlaying = true;
         audio.play();
-        player.classList.add("playing");
       }
     };
+    audio.onplay = function () {
+      _this.isPlaying = true;
+      player.classList.add("playing");
+      cdThumbAnimate.play();
+    };
+    audio.onpause = function () {
+      _this.isPlaying = false;
+      player.classList.remove("playing");
+      cdThumbAnimate.pause();
+    };
+    //khi tien do bai hat thay doi
+    audio.ontimeupdate = function () {
+      if (audio.duration) {
+        const progressPercent = Math.floor(
+          (audio.currentTime / audio.duration) * 100
+        );
+        progress.value = progressPercent;
+      }
+    };
+    //xu ly khi tua
+    progress.onchange = function (e) {
+      const seekTime = (audio.duration / 100) * e.target.value;
+      audio.currentTime = seekTime;
+    };
+    nextBtn.onclick = function () {
+      _this.nextSong();
+      audio.play();
+    };
+    prevBtn.onclick = function () {
+      _this.prevSong();
+      audio.play();
+    };
+    // RANDOM bai hat nao do && ON/OFF
+    randomBtn.onclick = function () {};
   },
   defineProperties: function () {
     Object.defineProperty(this, "currentSong", {
@@ -115,10 +151,36 @@ const app = {
       },
     });
   },
+  //tai bai hat
   loadCurrentSong: function () {
     heading.textContent = this.currentSong.name;
     cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
     audio.src = this.currentSong.path;
+  },
+  //chon bai tiep/truoc
+  nextSong: function () {
+    this.curIndex++;
+    if (this.curIndex >= this.songs.length) {
+      this.curIndex = 0;
+    }
+    this.loadCurrentSong();
+  },
+  prevSong: function () {
+    this.curIndex--;
+    if (this.curIndex < 0) this.curIndex = this.songs.length - 1;
+    this.loadCurrentSong();
+  },
+  //Ham Random
+  playRandomSong: function () {
+    let newIndex;
+    const arrCheck = [this.songs.length];
+    arrCheck.fill(0);
+    do {
+      newIndex = Math.floor(Math.random() * this.songs.length);
+      arrCheck[newIndex] = 1;
+    } while (newIndex === this.curIndex);
+    this.curIndex = newIndex;
+    this.loadCurrentSong();
   },
   start: function () {
     //định nghĩa các thuộc tính cho object
@@ -129,6 +191,8 @@ const app = {
     this.loadCurrentSong();
     //render các danh sách bài hát
     this.render();
+    this.nextSong();
+    this.prevSong();
   },
 };
 app.start();
