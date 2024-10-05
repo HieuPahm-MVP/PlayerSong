@@ -70,9 +70,13 @@ const app = {
     },
   ],
   render: function () {
-    const htmls = this.songs.map((song) => {
-      return `<div class="song">
-          <div class="thumb" style="background-image: url('${song.image}')"></div>
+    const htmls = this.songs.map((song, index) => {
+      return `<div class="song ${
+        index === this.curIndex ? "active" : ""
+      }" data-index = "${index}">
+          <div class="thumb" style="background-image: url('${
+            song.image
+          }')"></div>
           <div class="body">
             <h3 class="title">${song.name}</h3>
             <p class="author">${song.singer}</p>
@@ -82,7 +86,7 @@ const app = {
           </div>
         </div>`;
     });
-    $(".playlist").innerHTML = htmls.join("");
+    playlist.innerHTML = htmls.join("");
   },
   handleEvents: function () {
     const _this = this;
@@ -134,15 +138,52 @@ const app = {
       audio.currentTime = seekTime;
     };
     nextBtn.onclick = function () {
-      _this.nextSong();
+      if (_this.isRandom) {
+        _this.playRandomSong();
+      } else {
+        _this.nextSong();
+      }
       audio.play();
+      _this.render();
+      _this.scrollToActiveSong();
     };
     prevBtn.onclick = function () {
-      _this.prevSong();
+      if (_this.isRandom) _this.playRandomSong();
+      else {
+        _this.prevSong();
+      }
       audio.play();
+      _this.scrollToActiveSong();
     };
     // RANDOM bai hat nao do && ON/OFF
-    randomBtn.onclick = function () {};
+    randomBtn.onclick = function (e) {
+      _this.isRandom = !_this.isRandom;
+      randomBtn.classList.toggle("active", _this.isRandom);
+    };
+    audio.onended = function () {
+      if (_this.isRepeat) {
+        audio.play();
+      } else {
+        nextBtn.click();
+      }
+    };
+    //loop
+    repeatBtn.onclick = function () {
+      _this.isRepeat = !_this.isRepeat;
+      repeatBtn.classList.toggle("active", _this.isRepeat);
+    };
+    //Lang nghe khi click vao bai hat tuy y se phat bai hat do
+    playlist.onclick = function (e) {
+      const songNode = e.target.closest(".song:not(.active)");
+      if (songNode || e.target.closest(".option")) {
+        if (songNode) {
+          _this.curIndex = Number(songNode.dataset.index);
+          _this.loadCurrentSong();
+          _this.render();
+          audio.play();
+        }
+      }
+    };
   },
   defineProperties: function () {
     Object.defineProperty(this, "currentSong", {
@@ -156,6 +197,15 @@ const app = {
     heading.textContent = this.currentSong.name;
     cdThumb.style.backgroundImage = `url('${this.currentSong.image}')`;
     audio.src = this.currentSong.path;
+  },
+  //Hien thi den bai hat dc phat
+  scrollToActiveSong: function () {
+    setTimeout(() => {
+      $(".song.active").scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
+    }, 200);
   },
   //chon bai tiep/truoc
   nextSong: function () {
